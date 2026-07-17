@@ -47,6 +47,22 @@ export async function registerCompany(formData: FormData) {
   redirect("/login?message=Check your email to confirm the account, then sign in to create your company.");
 }
 
+export async function requestPasswordReset(formData: FormData) {
+  if (!isSupabaseConfigured()) {
+    redirect("/login?mode=forgot&error=Password%20reset%20requires%20Supabase%20configuration.");
+  }
+  const email = value(formData, "email");
+  if (!email) redirect("/login?mode=forgot&error=Enter%20your%20email%20address.");
+
+  const supabase = await createClient();
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${appUrl}/auth/callback?next=/settings`,
+  });
+  if (error) redirect(`/login?mode=forgot&error=${encodeURIComponent(error.message)}`);
+  redirect("/login?message=Check%20your%20email%20for%20a%20password%20reset%20link.");
+}
+
 export async function signOut() {
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
